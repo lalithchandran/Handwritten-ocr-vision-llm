@@ -1,0 +1,31 @@
+services:
+  llama-cpp-server-cpu-qwen3b-q8:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llama-cpp-server-cpu-qwen3b-q8
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "7979:7979"
+    command:
+      - -m
+      - /models/Qwen3VL-2B-Instruct-Q4_K_M.gguf
+      - --mmproj
+      - /models/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf
+      - --port
+      - "7979"
+      - --host
+      - 0.0.0.0
+      - --n-gpu-layers
+      - "15000"
+      - -n
+      - "4096"
+      - -t
+      - "16"
+      
