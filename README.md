@@ -69,8 +69,18 @@ Returns:
 
 ---
 
-## 👨‍💻 Author
+---
 
-Lalith Chandran
+## 👨‍💻 About the Developer
 
-M.Sc Computer Science
+**Lalith Chandran**  
+M.Sc Computer Science  
+Backend & AI Developer  
+
+This project showcases practical experience in:
+- Vision Language Model integration
+- REST API engineering with FastAPI
+- Docker-based deployment workflows
+- Model file management best practices
+
+🔗 GitHub: https://github.com/lalithchandran
