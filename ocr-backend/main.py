@@ -33,6 +33,8 @@ Rules:
 - Do NOT correct spelling.
 - Do NOT summarize.
 - Do NOT interpret meaning.
+- Do NOT repeat content.
+- Stop when transcription ends.
 - If unreadable, write [unclear].
 - If partially readable, write [word?].
 
@@ -52,7 +54,6 @@ def preprocess_image(image_bytes: bytes) -> str:
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG")
 
-    # Return base64 string
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
@@ -65,32 +66,39 @@ async def extract_ocr(file: UploadFile = File(...)):
         image_bytes = await file.read()
         image_base64 = preprocess_image(image_bytes)
 
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Extract the handwritten text from this image."
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{image_base64}"
+                        }
+                    }
+                ]
+            }
+        ]
+
         response = client.chat.completions.create(
             model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Extract all handwritten text from this image."
-                        },
-                        {
-                            # Corrected format: Use "image_url" and format as a Data URI
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_base64}"
-                            }
-                        }
-                    ],
-                },
-            ],
-            max_tokens=800,
-            temperature=0
+            messages=messages,
+
+            # 🔥 STABLE OCR SETTINGS (NO LOOPING)
+            temperature=0.2,
+            top_p=0.9,
+            max_tokens=512,
+            frequency_penalty=0.5,
+            presence_penalty=0.3,
+            stop=["\n\n\n", "</s>"]
         )
 
-        extracted_text = response.choices[0].message.content
+        extracted_text = response.choices[0].message.content.strip()
 
         return {
             "status": "success",
@@ -112,7 +120,6 @@ async def extract_ocr(file: UploadFile = File(...)):
 @app.get("/")
 def health():
     return {"message": "OCR API is running"}
-
 
 # -----------------------------
 # Run Server
